@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+        <title>Project #3 - Hellicopter</title>
+        <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+        #webgl {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        </style>
+    </head>
+<body>
+    <h1 align=center>Project#3 - Hellicopter</h1>
+    <h3 align=center>2016920050 컴퓨터과학부 정진용</h3>
+    <canvas id="webgl"></canvas>
+</body>
+<script type="module">
+import * as THREE from "./three.module.js"
+function main(){
+    //canvas
+    const canvas = document.querySelector('#webgl');
+    const renderer = new THREE.WebGLRenderer({canvas});
+    renderer.setSize(1280, 720);
+
+    //scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('black');
+
+    //Texture loader
+    const loader = new THREE.TextureLoader();
+    const height = loader.load('./yorkville.jpg');
+    const texture = loader.load('./yorkville.jpg');
+    const alpha = loader.load('./yorkville.jpg');
+
+
+    //geometry heightMap
+    const geometry = new THREE.PlaneBufferGeometry(25, 25, 64, 64);
+    const material = new THREE.MeshStandardMaterial({
+        color: '#964b00',
+        map: texture,
+        displacementMap: height,
+        displacementScale: 5,
+        alphaMap: alpha,
+        transparent: false,
+        depthTest: false
+    });
+    const plane = new THREE.Mesh(geometry, material);
+    plane.rotation.x = 30;
+    plane.position.set(0, -5, 0);
+    scene.add(plane);
+
+   // baseHellicopter
+   const hellicopter = new THREE.Object3D();{
+       scene.add(hellicopter);
+    }
+
+   // hellicopterBody
+   const heli_body = new THREE.Mesh(
+                        new THREE.BoxGeometry(1, 1, 1),
+                        new THREE.MeshPhongMaterial({color: 'red'}));
+   hellicopter.add(heli_body);
+
+   // hellicopterTail              
+   const heli_tail = new THREE.Mesh(
+                        new THREE.BoxGeometry(1, 0.5, 0.5),
+                        new THREE.MeshPhongMaterial({color:'orange'}));
+   heli_body.add(heli_tail);
+
+   // hellicopterWing               
+   const wing = new THREE.Object3D();
+   heli_body.add(wing);
+
+   // helicopterWing Mk2
+   const wingMk1 = new THREE.Mesh(
+                        new THREE.BoxGeometry(2.5, 0.1, 0.1),
+                        new THREE.MeshPhongMaterial({color: 'white'}));
+   wing.add(wingMk1);
+   const wingMk2 = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.1, 0.1, 2.5),
+                        new THREE.MeshPhongMaterial({color: 'white'}));
+   wing.add(wingMk2);
+
+   function updateHellicopter(){
+       //base location
+       hellicopter.position.set(0, 0, 0);
+       heli_tail.position.x = 1;
+       wing.position.y = 0.5;
+   }
+   updateHellicopter();
+   
+   // movement - please calibrate these values
+   const xSpeed = 0.1;
+   const ySpeed = 0.1;
+
+   // bullet and keyboard update
+   var bullets = [];
+   document.addEventListener("keydown", onDocumentKeyDown, false);
+   function onDocumentKeyDown(event) {
+     const keyCode = event.which;
+     if (keyCode == 38) {
+       hellicopter.position.x -= ySpeed;
+      } else if (keyCode == 40) {
+        hellicopter.position.x += ySpeed;
+      } else if (keyCode == 37) {
+        hellicopter.rotation.y += xSpeed;
+      } else if (keyCode == 39) {
+        hellicopter.rotation.y -= xSpeed;
+      } else if (keyCode == 65) {
+        hellicopter.position.y += xSpeed;
+      } else if (keyCode == 90) {
+        hellicopter.position.y -= xSpeed;
+      } else if (keyCode == 32) {
+        let bullet = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 4), new THREE.MeshBasicMaterial({
+        color: "white"
+        }));
+        bullet.position.set(hellicopter.position.x, hellicopter.position.y, hellicopter.position.z); // start position - the tip of the weapon
+        bullet.rotation.y = -1.5;
+        scene.add(bullet);
+        bullets.push(bullet);
+      } else if (keyCode == 187){
+        camera.position.x -= 5;
+        camera.position.y -= 5;
+      } else if (keyCode == 189){
+        camera.position.x += 5;
+        camera.position.y += 5;
+      }
+    };
+    
+   {
+       // an ambient light
+      const ambientlight = new THREE.AmbientLight('white', 0.3);
+      scene.add(ambientlight);
+
+      // an directional light
+      const directlight = new THREE.DirectionalLight('white', 1)
+      scene.add(directlight);
+    }
+
+    //camera
+    const fov = 45;
+    const aspect = 2;  // the canvas default
+    const near = 0.1;
+    const far = 100;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.set(25, 20, -5);
+
+    function render(time) {
+      camera.lookAt(0, 1, 0);
+      time *= 0.005;
+      wing.rotation.y = time;
+
+      bullets.forEach(bullet => {
+        bullet.translateZ(0.5);
+      });
+      requestAnimationFrame(render);
+      renderer.render(scene, camera);
+    };
+    requestAnimationFrame(render);
+}
+main();
+</script>
+</html>
